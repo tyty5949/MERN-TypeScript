@@ -45,6 +45,12 @@ module.exports = {
       "error",
       { functions: false, classes: true, variables: true, typedefs: true },
     ],
+    "import/extensions": [
+      "error",
+      { "js": "never", "ts": "never" }
+    ],
+    "import/first": ["off"],
+    "@typescript-eslint/ban-ts-comment": ["off"],
   },
   parserOptions: {
     project: './tsconfig.json',
