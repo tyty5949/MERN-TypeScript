@@ -1,28 +1,23 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: 'tsconfig.json',
+    project: './client/tsconfig.json',
     sourceType: 'module',
   },
   plugins: [
+    'react',
     '@typescript-eslint/eslint-plugin',
     'prettier',
   ],
   extends: [
     'eslint:recommended',
+    'plugin:react/recommended',
     'plugin:@typescript-eslint/recommended',
     'prettier/@typescript-eslint',
     'plugin:prettier/recommended',
   ],
-  root: true,
   env: {
-    node: true,
+    browser: true,
     jest: true,
-  },
-  rules: {
-    '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/ban-ts-comment': 'off',
   },
 };

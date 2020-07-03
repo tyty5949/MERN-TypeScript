@@ -1,13 +1,17 @@
 import Transport = require('winston-transport');
-// @ts-ignore UPSTREAM
-import S3StreamLogger = require('s3-streamlogger');
 import Winston = require('winston');
 import ExpressWinston = require('express-winston');
 import Sentry = require('@sentry/node');
 import Express = require('express');
 
+enum LogLevel {
+  Verbose = 'verbose',
+  Info = 'info',
+  Warn = 'warn',
+  Error = 'error',
+}
+
 let consoleTransport: Winston.transports.ConsoleTransportInstance;
-let s3Transport: Winston.transports.StreamTransportInstance;
 let transports: Transport[];
 let logger: Winston.Logger;
 
@@ -17,8 +21,10 @@ let logger: Winston.Logger;
  */
 const readableFormat = Winston.format.printf(
   ({ level, message, timestamp, meta }) => {
-    if (process.env.NODE_ENV !== 'production' && meta !== {})
-      return `${timestamp} ${level}: ${message}\n${JSON.stringify(meta)}`;
+    if (process.env.NODE_ENV !== 'production')
+      return `${timestamp} ${level}: ${message}${
+        level !== 'http' && meta ? `\n${JSON.stringify(meta, null, 2)}` : ''
+      }`;
     return `${timestamp} ${level}: ${message}`;
   },
 );
@@ -35,7 +41,7 @@ export function initialize(): void {
   if (!consoleTransport) {
     // Initialize console transport
     consoleTransport = new Winston.transports.Console({
-      level: 'info',
+      level: process.env.CONSOLE_LOG_LEVEL || 'info',
       format: Winston.format.combine(
         Winston.format.timestamp(),
         Winston.format.colorize(),
@@ -44,29 +50,10 @@ export function initialize(): void {
     });
   }
 
-  if (!s3Transport && process.env.NODE_ENV === 'production') {
-    s3Transport = new Winston.transports.Stream({
-      stream: new S3StreamLogger.S3StreamLogger({
-        bucket: process.env.WINSTON_S3_BUCKET,
-        folder: process.env.WINSTON_S3_FOLDER,
-        access_key_id: process.env.WINSTON_S3_ACCESS_KEY_ID,
-        secret_access_key: process.env.WINSTON_S3_SECRET,
-      }),
-      format: Winston.format.combine(
-        Winston.format.timestamp(),
-        Winston.format.json(),
-      ),
-    });
-    s3Transport.on('error', (err) => {
-      // eslint-disable-next-line no-console
-      console.error('S3 logging transport error', err);
-    });
-  }
-
   // Set transports to use
   transports = [consoleTransport];
   if (process.env.NODE_ENV === 'production') {
-    transports.push(s3Transport);
+    // transports.push(s3Transport);
   }
 
   // Initialize logger
@@ -95,6 +82,7 @@ export function addRequestMiddleware(app: Express.Application): void {
   app.use(
     ExpressWinston.logger({
       transports,
+      level: 'http',
       meta: true,
       msg: 'HTTP {{req.method}} {{req.url}}',
       expressFormat: true,
@@ -127,19 +115,43 @@ export function addErrorMiddleware(app: Express.Application): void {
   );
 }
 
+function log(
+  level: LogLevel,
+  message: string,
+  meta?: Record<string, unknown>,
+): void {
+  logger.log({
+    level,
+    message,
+    meta,
+  });
+
+  if (process.env.NODE_ENV === 'production' && level === LogLevel.Error) {
+    Sentry.configureScope((scope) => {
+      scope.setLevel(Sentry.Severity.Error);
+      scope.setExtra('meta', meta);
+      Sentry.captureMessage(message);
+    });
+  }
+}
+
+/**
+ * Logs a message with the verbose level.
+ *
+ * @param msg       - The log message
+ * @param [meta={}] - Optional meta information to be passed into log.
+ */
+export const verbose = (msg: string, meta?: Record<string, unknown>): void =>
+  log(LogLevel.Verbose, msg, meta);
+
 /**
  * Logs a message with the info level.
  *
  * @param msg       - The log message
  * @param [meta={}] - Optional meta information to be passed into log.
  */
-export function info(msg: string, meta?: Record<string, unknown>): void {
-  logger.log({
-    level: 'info',
-    message: msg,
-    meta,
-  });
-}
+export const info = (msg: string, meta?: Record<string, unknown>): void =>
+  log(LogLevel.Info, msg, meta);
 
 /**
  * Logs a message with the warn level.
@@ -147,13 +159,8 @@ export function info(msg: string, meta?: Record<string, unknown>): void {
  * @param msg       - The log message
  * @param [meta={}] - Optional meta information to be passed into log.
  */
-export function warn(msg: string, meta?: Record<string, unknown>): void {
-  logger.log({
-    level: 'warn',
-    message: msg,
-    meta,
-  });
-}
+export const warn = (msg: string, meta?: Record<string, unknown>): void =>
+  log(LogLevel.Warn, msg, meta);
 
 /**
  * Logs a message with error level.
@@ -161,18 +168,5 @@ export function warn(msg: string, meta?: Record<string, unknown>): void {
  * @param msg       - The log message
  * @param [meta={}] - Optional meta information to be passed into log.
  */
-export function error(msg: string, meta?: Record<string, unknown>): void {
-  logger.log({
-    level: 'error',
-    message: msg,
-    meta,
-  });
-
-  if (process.env.NODE_ENV === 'production') {
-    Sentry.configureScope((scope) => {
-      scope.setLevel(Sentry.Severity.Error);
-      scope.setExtra('meta', meta);
-      Sentry.captureMessage(msg);
-    });
-  }
-}
+export const error = (msg: string, meta?: Record<string, unknown>): void =>
+  log(LogLevel.Error, msg, meta);

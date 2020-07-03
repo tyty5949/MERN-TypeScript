@@ -9,10 +9,12 @@
     "allowSyntheticDefaultImports": true,
     "target": "es2017",
     "sourceMap": true,
-    "outDir": "./build",
+    "outDir": "../dist",
     "baseUrl": "./",
     "incremental": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "jsx": "react"
   },
-  "include": ["server/**/*"]
+  "include": ["**/*"]
 }
+
