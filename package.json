@@ -14,7 +14,7 @@
     "prettier": "prettier --write \"server/**/*.ts\" \"client/**/*.{ts,tsx}\"",
     "start:dev": "concurrently \"webpack-dev-server --no-inline\" \"nest start --watch\"",
     "start:prod": "node build/main",
-    "lint": "eslint '{server,client}/**/*.ts'",
+    "lint": "eslint '{server,client}/**/*.{ts,tsx}'",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
