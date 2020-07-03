@@ -1,4 +1,4 @@
-import { ISeeder } from '../seed';
+import { ISeeder } from '../helpers/seeder';
 
 const Seeder: ISeeder = {
   async run(db) {

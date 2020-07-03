@@ -2,8 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as Dotenv from 'dotenv';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
 import * as DB from './util/db';
 
 Dotenv.config();
@@ -28,6 +28,7 @@ DB.connect(async (err, client) => {
     await bootstrap();
     process.exit(0);
   } else {
+    // eslint-disable-next-line no-console
     console.log(err);
     process.exit(-1);
   }

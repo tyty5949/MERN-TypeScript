@@ -1,6 +1,7 @@
+/* eslint-disable no-await-in-loop */
 import { Collection, MongoClient } from 'mongodb';
-import path = require('path');
-import fs = require('fs');
+import * as path from 'path';
+import * as fs from 'fs';
 import * as Logger from '../../util/log';
 import * as DB from '../../util/db';
 
@@ -42,7 +43,7 @@ export const getMigrations = async (
   const migrations: IMigrationItem[] = [];
   const files = fs.readdirSync(basePath);
 
-  for (let i = 0; i < files.length; i++) {
+  for (let i = 0; i < files.length; i += 1) {
     const filepath = `${basePath}${basePath.endsWith('/') ? '' : '/'}${
       files[i]
     }`;

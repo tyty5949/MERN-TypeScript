@@ -45,24 +45,15 @@
  *    };
  *    module.exports = Seeder;
  */
-import Dotenv = require('dotenv');
+/* eslint-disable no-await-in-loop,no-console */
+import * as Dotenv from 'dotenv';
 import fs from 'fs';
-import { MongoClient } from 'mongodb';
 import * as Logger from '../util/log';
 import { applySeeder, runDefault } from './helpers/seeder';
 import * as DB from '../util/db';
 
 Dotenv.config();
 Logger.initialize();
-
-export interface ISeeder {
-  /**
-   * Called when the seeder should execute. Should populate all
-   * necessary data using the given MongoClient instance.
-   * @param db
-   */
-  run(db: MongoClient): void;
-}
 
 const bootstrap = (): void => {
   const seederDir = process.env.SEEDER_DIR || 'seeders';
@@ -92,6 +83,7 @@ const bootstrap = (): void => {
       }
 
       // Apply all specified seeders
+      // eslint-disable-next-line no-restricted-syntax
       for (const seeder of seeders) {
         await applySeeder(seeder, clientInstance, seederDir);
       }

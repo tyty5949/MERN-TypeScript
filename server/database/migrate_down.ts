@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
-import Dotenv = require('dotenv');
-import Migrator = require('./helpers/migrator');
+import * as Dotenv from 'dotenv';
+import * as Migrator from './helpers/migrator';
 import * as DB from '../util/db';
 import * as Logger from '../util/log';
 

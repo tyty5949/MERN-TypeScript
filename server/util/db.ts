@@ -1,5 +1,4 @@
 import { MongoClient, Collection } from 'mongodb';
-import * as Migrator from '../database/helpers/migrator';
 import * as Logger from './log';
 
 /**
@@ -28,7 +27,7 @@ export function connect(callback: IConnectCallback): void {
     { useUnifiedTopology: true },
     (err: Error, initialized: MongoClient) => {
       if (err) {
-        Logger.error(`Error connecting to MongoDB database`, { err });
+        Logger.error('Error connecting to MongoDB database', { err });
         return callback(err, null);
       }
       db = initialized;
@@ -61,46 +60,3 @@ export function getConnection(): MongoClient {
 export function get(collection: string, database = 'datastore'): Collection {
   return db.db(database).collection(collection);
 }
-
-interface IMigrationOptions {
-  database: string;
-  migrationCollection: string;
-  migrationsPath: string;
-}
-
-/* eslint-disable no-await-in-loop */
-/**
- * Run all migrations which have yet to be run using our
- * migration runner.
- *
- * @see database/migrate_up.ts
- *
- * @param options
- */
-export const runMigrations = async (
-  options: IMigrationOptions,
-): Promise<void> => {
-  Logger.info('Running migrations...');
-  await Migrator.ensureMigrationCollection(
-    options.database,
-    options.migrationCollection,
-  );
-
-  const migrations = await Migrator.getMigrations(options.migrationsPath);
-
-  for (let i = 0; i < migrations.length; i++) {
-    const item = migrations[i];
-
-    const migrationApplied = await Migrator.isMigrationApplied(item.file);
-    if (!migrationApplied) {
-      item.migration.up(db);
-      await Migrator.markMigrationAsApplied(
-        item.file,
-        options.database,
-        options.migrationCollection,
-      );
-      Logger.info('-- applied migration', { filename: item.file });
-    }
-  }
-};
-/* eslint-enable no-await-in-loop */

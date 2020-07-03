@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
-import Dotenv = require('dotenv');
-import Migrator = require('./helpers/migrator');
+import * as Dotenv from 'dotenv';
+import * as Migrator from './helpers/migrator';
 import * as DB from '../util/db';
 import * as Logger from '../util/log';
 
@@ -26,7 +26,7 @@ DB.connect(async (err, clientInstance) => {
 
     await Migrator.ensureMigrationCollection();
 
-    for (let i = 0; i < migrations.length; i++) {
+    for (let i = 0; i < migrations.length; i += 1) {
       try {
         const hasMigration = await Migrator.isMigrationApplied(
           migrations[i].file,

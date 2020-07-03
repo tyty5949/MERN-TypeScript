@@ -1,9 +1,33 @@
+/* eslint-disable no-await-in-loop,no-console */
 import { MongoClient } from 'mongodb';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as Logger from '../../util/log';
-import * as DB from '../../util/db';
-import { ISeeder } from '../seed';
+
+export interface ISeeder {
+  /**
+   * Called when the seeder should execute. Should populate all
+   * necessary data using the given MongoClient instance.
+   * @param db
+   */
+  run(db: MongoClient): void;
+}
+
+/**
+ * Runs the specified seeder file. Assumes that the default export matches the
+ * ISeeder type. If not, an error is thrown.
+ *
+ * @throws Error
+ * @param seederFile
+ * @param clientInstance
+ */
+export const runSeeder = async (
+  seederFile: string,
+  clientInstance: MongoClient,
+): Promise<void> => {
+  const a: ISeeder = await import(seederFile);
+  await a.run(clientInstance);
+};
 
 /**
  * Applies the given seeder. Seeder should be given as a filename as the path
@@ -18,12 +42,11 @@ export const applySeeder = async (
   clientInstance: MongoClient,
   seederDir: string,
 ): Promise<void> => {
-  const seederFile =
-    seeder.indexOf('.') > -1
-      ? // Given seeder has an extension
-        path.join(__dirname, seederDir, seeder)
-      : // Given seeder is not given an extension, assume .ts
-        path.join(__dirname, seederDir, `${seeder}.ts`);
+  let seederFile = path.join(__dirname, seederDir, seeder);
+  if (seeder.indexOf('.') < 0) {
+    // Given seeder is not given an extension, assume .ts
+    seederFile += '.ts';
+  }
 
   if (!fs.existsSync(seederFile)) {
     Logger.warn('Unable to find seeder!', { seeder, file: seederFile });
@@ -44,24 +67,7 @@ export const applySeeder = async (
     }
   } else {
     Logger.warn('Unable to find seeder!', { seeder, file: seederFile });
-    return;
   }
-};
-
-/**
- * Runs the specified seeder file. Assumes that the default export matches the
- * ISeeder type. If not, an error is thrown.
- *
- * @throws Error
- * @param seederFile
- * @param clientInstance
- */
-export const runSeeder = async (
-  seederFile: string,
-  clientInstance: MongoClient,
-): Promise<void> => {
-  const a: ISeeder = await import(seederFile);
-  await a.run(clientInstance);
 };
 
 /**
@@ -104,6 +110,7 @@ export const runDefault = async (
   const defaultSeeders = defaultFileData.seeders;
 
   if (defaultSeeders && Array.isArray(defaultSeeders)) {
+    // eslint-disable-next-line no-restricted-syntax
     for (const seeder of defaultFileData.seeders) {
       await applySeeder(seeder, clientInstance, seederDir);
     }

@@ -20,11 +20,14 @@ let logger: Winston.Logger;
  * for winston console logs.
  */
 const readableFormat = Winston.format.printf(
+  // Prettier and eslint are fighting ¯\_(ツ)_/¯
+  // eslint-disable-next-line object-curly-newline
   ({ level, message, timestamp, meta }) => {
-    if (process.env.NODE_ENV !== 'production')
+    if (process.env.NODE_ENV !== 'production') {
       return `${timestamp} ${level}: ${message}${
         level !== 'http' && meta ? `\n${JSON.stringify(meta, null, 2)}` : ''
       }`;
+    }
     return `${timestamp} ${level}: ${message}`;
   },
 );
