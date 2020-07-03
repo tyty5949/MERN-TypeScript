@@ -44,5 +44,14 @@ module.exports = {
         tsx: 'never',
       },
     ],
+
+    // Allow jsx in .tsx files
+    'react/jsx-filename-extension': [1, { extensions: ['.tsx'] }],
+
+    // Client code won't need dependencies included
+    'import/no-extraneous-dependencies': [
+      'error',
+      { devDependencies: ['client/**/*'] },
+    ],
   },
 };
